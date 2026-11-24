@@ -1,6 +1,6 @@
 export default function BooksSkeleton() {
   return (
-    <section className="w-full py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto animate-pulse">
+    <section className="site-container py-12 animate-pulse">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
         <div>
           <div className="h-4 w-28 rounded bg-zinc-200 mb-2" />

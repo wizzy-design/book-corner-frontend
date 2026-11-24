@@ -1,19 +1,65 @@
 @import "tailwindcss";
 
 :root {
+  /* Core Surfaces & Ink */
   --background: #ffffff;
   --foreground: #171717;
+  --surface: #fafafa;
+  --surface-card: #ffffff;
+  --surface-muted: #f4f4f5;
+  --ink: #18181b;
+  --ink-secondary: #52525b;
+  --ink-muted: #71717a;
+  --ink-subtle: #999999;
+  --border-subtle: #e4e4e7;
+
+  /* Brand Colors */
   --brand-pink: #FDECEF;
   --brand-pink-hover: #F9E2E7;
   --brand-pink-dark: #E05375;
+  --brand-gold: #F3BE3C;
+  --brand-emerald: #059669;
+  --brand-emerald-soft: #ECFDF5;
+  --brand-emerald-text: #047857;
+
+  /* Book Illustration Tokens */
+  --book-page: #FAF7F2;
+  --book-page-border: #E2DDD7;
+  --book-cover: #F5DDE2;
+  --book-headband-edge: #D8A77E;
+  --book-headband-center: #FCECEF;
+  --book-ribbon-from: #C93B60;
+  --book-ribbon-to: #A02848;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-card: var(--surface-card);
+  --color-surface-muted: var(--surface-muted);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-border-subtle: var(--border-subtle);
+
   --color-brand-pink: var(--brand-pink);
   --color-brand-pink-hover: var(--brand-pink-hover);
   --color-brand-pink-dark: var(--brand-pink-dark);
+  --color-brand-gold: var(--brand-gold);
+  --color-brand-emerald: var(--brand-emerald);
+  --color-brand-emerald-soft: var(--brand-emerald-soft);
+  --color-brand-emerald-text: var(--brand-emerald-text);
+
+  --color-book-page: var(--book-page);
+  --color-book-page-border: var(--book-page-border);
+  --color-book-cover: var(--book-cover);
+  --color-book-headband-edge: var(--book-headband-edge);
+  --color-book-headband-center: var(--book-headband-center);
+  --color-book-ribbon-from: var(--book-ribbon-from);
+  --color-book-ribbon-to: var(--book-ribbon-to);
+
   --font-sans: var(--font-space-mono), monospace;
   --font-heading: var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-space-mono), monospace;
@@ -63,4 +109,81 @@ h1, h2, h3, h4, h5, h6 {
   animation-delay: 0.3s;
   transform-style: preserve-3d;
   backface-visibility: hidden;
+}
+
+@keyframes swipe-hint {
+  0% {
+    transform: translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(-28px) rotate(-3deg);
+  }
+  55% {
+    transform: translateX(28px) rotate(3deg);
+  }
+  80% {
+    transform: translateX(-6px) rotate(-0.5deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+}
+
+.animate-swipe-hint {
+  animation: swipe-hint 1.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) 0.25s 1;
+}
+
+@keyframes hint-stamp-skip {
+  0%, 8% {
+    opacity: 0;
+  }
+  18%, 35% {
+    opacity: 1;
+  }
+  45%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes hint-stamp-save {
+  0%, 40% {
+    opacity: 0;
+  }
+  50%, 68% {
+    opacity: 1;
+  }
+  78%, 100% {
+    opacity: 0;
+  }
+}
+
+.animate-hint-skip {
+  opacity: 0;
+  animation: hint-stamp-skip 1.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) 0.25s 1;
+}
+
+.animate-hint-save {
+  opacity: 0;
+  animation: hint-stamp-save 1.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) 0.25s 1;
+}
+
+@keyframes question-enter {
+  0% {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-question-enter {
+  animation: question-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@layer components {
+  .site-container {
+    @apply mx-auto w-full max-w-6xl px-6 sm:px-10 lg:px-16;
+  }
 }

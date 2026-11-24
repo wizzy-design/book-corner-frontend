@@ -9,6 +9,7 @@ import type { Tag, TagsApiResponse } from "@/models/tag";
 import type {
   QuizQuestionsApiResponse,
   QuizRecommendApiResponse,
+  QuizRecommendationItem,
   QuizRecommendPayload,
 } from "@/models/quiz";
 import type {
@@ -18,8 +19,9 @@ import type {
 } from "@/models/order";
 import type { HealthApiResponse, AdminLoginResponse, ApiErrorResponse } from "@/models/api";
 
-const API_BASE_URL =
+const rawBaseUrl =
   process.env.NEXT_PUBLIC_API_URL || "https://book-corner-api.onrender.com";
+const API_BASE_URL = rawBaseUrl.replace(/\/+$/, "");
 
 export class ApiError extends Error {
   code: string;
@@ -40,7 +42,7 @@ async function request<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(options.body ? { "Content-Type": "application/json" } : {}),
     ...(options.headers as Record<string, string>),
   };
 
@@ -64,18 +66,22 @@ async function request<T>(
         errorMessage = errJson.error.message || errorMessage;
       }
     } catch {
-      // response wasn't json
+      // Response body was not valid JSON
     }
 
     throw new ApiError(errorMessage, errorCode, res.status);
   }
 
-  // Handle 204 or empty responses
   if (res.status === 204) {
     return {} as T;
   }
 
-  return (await res.json()) as T;
+  const text = await res.text();
+  if (!text) {
+    return {} as T;
+  }
+
+  return JSON.parse(text) as T;
 }
 
 // ==========================================
@@ -126,19 +132,31 @@ export async function getTags(): Promise<Tag[]> {
 
 export async function getQuizQuestions(): Promise<QuizQuestionsApiResponse> {
   return request<QuizQuestionsApiResponse>("/quiz/questions", {
-    cache: "no-store",
+    next: { revalidate: 300 },
   });
 }
 
 export async function submitQuizRecommendation(
   payload: QuizRecommendPayload
-): Promise<Book[]> {
+): Promise<QuizRecommendationItem[]> {
   const response = await request<QuizRecommendApiResponse>("/quiz/recommend", {
     method: "POST",
     body: JSON.stringify(payload),
     cache: "no-store",
   });
-  return response.data ?? [];
+
+  const rawItems = Array.isArray(response.data) ? response.data : [];
+  return rawItems
+    .map((item): QuizRecommendationItem | null => {
+      if ("book" in item && item.book) {
+        return { book: item.book, score: item.score };
+      }
+      if ("id" in item && "title" in item) {
+        return { book: item as Book };
+      }
+      return null;
+    })
+    .filter((item): item is QuizRecommendationItem => item !== null);
 }
 
 export async function placeOrder(payload: CreateOrderPayload): Promise<Order> {

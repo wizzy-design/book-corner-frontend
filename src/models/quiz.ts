@@ -26,6 +26,11 @@ export interface QuizRecommendPayload {
   answers: QuizAnswer[];
 }
 
+export interface QuizRecommendationItem {
+  book: Book;
+  score?: number;
+}
+
 export interface QuizRecommendApiResponse {
-  data: Book[];
+  data: (QuizRecommendationItem | Book)[];
 }

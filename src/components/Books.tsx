@@ -1,7 +1,8 @@
+import Link from "next/link";
 import type { Book, BooksApiResponse } from "@/models/book";
 import { getBooks } from "@/lib/api";
 import BookCard from "./BookCard";
-import Link from "next/link";
+import { BookPlaceholderIcon } from "./Icons";
 
 interface BooksProps {
   searchParams?: {
@@ -12,9 +13,10 @@ interface BooksProps {
 }
 
 export default async function Books({ searchParams }: BooksProps) {
-  const query = searchParams?.query || "";
-  const genre = searchParams?.genre || "";
-  const currentPage = Math.max(1, Number(searchParams?.page) || 1);
+  const query = searchParams?.query?.trim() || "";
+  const genre = searchParams?.genre?.trim() || "";
+  const parsedPage = Number.parseInt(searchParams?.page ?? "1", 10);
+  const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const limit = 12;
 
   let result: BooksApiResponse | null = null;
@@ -29,11 +31,10 @@ export default async function Books({ searchParams }: BooksProps) {
     console.error("Error loading books from API:", err);
   }
 
-  const books: Book[] = result?.data ?? [];
-  const total = result?.total ?? books.length;
-  const totalPages = Math.ceil(total / limit);
+  const books: Book[] = Array.isArray(result?.data) ? result.data : [];
+  const total = typeof result?.total === "number" && Number.isFinite(result.total) ? result.total : books.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  // Helper to build pagination links
   const createPageUrl = (pageNumber: number) => {
     const params = new URLSearchParams();
     if (query) params.set("query", query);
@@ -44,22 +45,10 @@ export default async function Books({ searchParams }: BooksProps) {
 
   if (!result || books.length === 0) {
     return (
-      <section className="w-full py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <section className="site-container py-12">
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 p-12 text-center bg-white/50">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 mb-3">
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
-              />
-            </svg>
+            <BookPlaceholderIcon className="h-6 w-6 stroke-current" />
           </div>
           <h3 className="text-base font-semibold text-zinc-900">
             {!result ? "Unable to load books" : "No books found"}
@@ -68,13 +57,13 @@ export default async function Books({ searchParams }: BooksProps) {
             {!result
               ? "The book catalog is currently unavailable. Please check back shortly."
               : query || genre
-                ? `No results match your criteria ${genre ? `in genre "${genre}"` : ""} ${query ? `for "${query}"` : ""}. Try adjusting your filters.`
+                ? `No results match your criteria${genre ? ` in genre "${genre}"` : ""}${query ? ` for "${query}"` : ""}. Try adjusting your filters.`
                 : "There are currently no published books available."}
           </p>
           {(query || genre) && (
             <Link
               href="/#catalog"
-              className="mt-4 inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-800"
+              className="mt-4 inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-800 transition"
             >
               Reset Filters
             </Link>
@@ -85,8 +74,7 @@ export default async function Books({ searchParams }: BooksProps) {
   }
 
   return (
-    <section className="w-full py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      {/* Section Sub-header Count info */}
+    <section className="site-container py-8">
       <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6">
         <p className="text-xs text-zinc-500">
           Showing <span className="font-semibold text-zinc-800">{books.length}</span>{" "}
@@ -95,7 +83,9 @@ export default async function Books({ searchParams }: BooksProps) {
           {genre ? ` in ${genre}` : ""}
           {query ? ` matching "${query}"` : ""}
         </p>
-        <span className="text-xs text-zinc-400">Page {currentPage} of {totalPages || 1}</span>
+        <span className="text-xs text-zinc-400">
+          Page {currentPage} of {totalPages}
+        </span>
       </div>
 
       {/* Books Grid */}
@@ -107,7 +97,7 @@ export default async function Books({ searchParams }: BooksProps) {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="mt-16 flex items-center justify-center gap-2">
+        <nav aria-label="Catalog pagination" className="mt-16 flex items-center justify-center gap-2">
           {currentPage > 1 ? (
             <Link
               href={createPageUrl(currentPage - 1)}
@@ -116,7 +106,10 @@ export default async function Books({ searchParams }: BooksProps) {
               Previous
             </Link>
           ) : (
-            <span className="rounded-lg border border-zinc-200 bg-zinc-100 px-4 py-2 text-xs font-medium text-zinc-400 cursor-not-allowed">
+            <span
+              aria-disabled="true"
+              className="rounded-lg border border-zinc-200 bg-zinc-100 px-4 py-2 text-xs font-medium text-zinc-400 cursor-not-allowed"
+            >
               Previous
             </span>
           )}
@@ -128,6 +121,7 @@ export default async function Books({ searchParams }: BooksProps) {
                 <Link
                   key={p}
                   href={createPageUrl(p)}
+                  aria-current={isCurrent ? "page" : undefined}
                   className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition ${
                     isCurrent
                       ? "bg-zinc-900 text-white"
@@ -148,11 +142,14 @@ export default async function Books({ searchParams }: BooksProps) {
               Next
             </Link>
           ) : (
-            <span className="rounded-lg border border-zinc-200 bg-zinc-100 px-4 py-2 text-xs font-medium text-zinc-400 cursor-not-allowed">
+            <span
+              aria-disabled="true"
+              className="rounded-lg border border-zinc-200 bg-zinc-100 px-4 py-2 text-xs font-medium text-zinc-400 cursor-not-allowed"
+            >
               Next
             </span>
           )}
-        </div>
+        </nav>
       )}
     </section>
   );
